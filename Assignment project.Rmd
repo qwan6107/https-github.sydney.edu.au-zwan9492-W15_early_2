@@ -1,0 +1,308 @@
+---
+title: "REPORT NAME"
+author:
+
+subtitle: "Assignment report"
+date: "University of Sydney | Data2002 | 7/11/2020"
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    self_contained: yes
+    theme: flatly
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_folding: hide
+---
+
+# Abstract
+
+#### Initial Data Analysis
+```{r}
+
+library(ggplot2)
+library(readr)
+library(tidyverse)
+library(janitor)
+library(knitr)
+library(dplyr)
+library(skimr)
+library(visdat)
+```
+
+```{r}
+data = readr::read_csv("housing_prices.csv")
+```
+##### Introduction
+The housing_prices.csv document provides a detail data collection of a random sample of 1734 houses taken from full Saratoga Housing Data. The dataset has 17 variables which represents a range of housing prices based on related housing properties. This project aims at studying the association between the house prices and their related properties by multiple regression model and try to predict the housing prices based on their properties by using the model. Below is a brief description of each variable. 
+
+Price: Housing prizes in US dollars.
+
+Lot.Size: Size of lot in acres.
+
+Waterfront: Whether the house includes waterfront. 1 refers to TRUE, 0 refers to FALSE.
+
+Age: The age of the house in years.
+
+Land.Value: The value of the land where the house is located.
+
+New.Construct: Whether the house is a new construction. 1 refers to TRUE, 0 refers to FALSE.
+
+Central.Air: Whether the house has central air conditioner. 1 refers to TRUE, 0 refers to FALSE.
+
+Fuel.Type: 5 different types of fuel used for heating including electric, gas, oil, wood, solar.
+
+Heat.Type: 3 types of heating system including electric, hot water, hot air
+
+Sewer.Type: 2 types of sewer system, private and public.
+
+Living.Area: Living area in square feet.
+
+Pct.College: Percentage of neighbourhoods that graduated from college.
+
+Bedrooms: Numbers of bedrooms.
+
+Fireplaces: Numbers of fireplaces.
+
+Bathrooms: Numbers of bathrooms.
+
+Rooms: Total numbers of rooms.
+
+Test: ???
+
+### Bias
+In a random sample, this data set only collect the details of house price in Saratoga which is a small town that can not represent house price in New York, because different area like central and countryside that have different living environment and around facilities which will influence the house price. Secondly, as zero conditional mean that there have missing variables, for instance, the location of the house is convenient for transportation, whether there are subway stations and bus stops nearby; whether there are security hazards in the area where the house is located, low crime rate and comprehensive security measures. Furthermore, the measure bias, there has no specific unit of loft-size, land value, living area that there may exist the error of measuring, then for perfect col-linearity, the number of total room equal to bedrooms plus bathrooms plus other rooms that may repeat then lead to bias.
+
+##### Data Cleaning
+```{r} 
+data = data %>% janitor::clean_names()
+# data
+```
+
+```{r}
+# 1.Price (drop rows with NA)
+price = data$price
+price[price == ""] = NA
+price = na.omit(price)
+```
+
+```{r}
+# 2.Lot.Size (drop rows with NA)
+lot_size = data$lot_size
+lot_size[lot_size == ""] = NA
+lot_size = na.omit(lot_size)
+
+```
+
+```{r}
+# 3.Waterfront (drop rows with NA)
+waterfront = data$waterfront
+waterfront[waterfront == ""] = NA
+waterfront = na.omit(waterfront)
+```
+
+```{r}
+# 4.Age (drop rows with NA)
+age = data$age
+age[age == ""] = NA
+age = na.omit(age)
+```
+
+```{r}
+# 5.Land.Value (drop rows with NA)
+land_value = data$land_value
+land_value[land_value == ""] = NA
+land_value = na.omit(land_value)
+```
+
+```{r}
+# 6.New.Construct (drop rows with NA)
+new_construct = data$new_construct
+new_construct[new_construct == ""] = NA
+new_construct = na.omit(new_construct)
+```
+
+```{r}
+# 7.Central.Air (drop rows with NA)
+central_air = data$central_air
+central_air[central_air == ""] = NA
+central_air = na.omit(central_air)
+```
+
+```{r}
+# 8.Fuel.Type (Change categorical data to numerical)
+
+# (unique(data$Fuel.Type))
+fuel_type = data$fuel_type
+fuel_type[fuel_type == "Electric"] = 1
+fuel_type[fuel_type == "Gas"] = 2
+fuel_type[fuel_type == "Oil"] = 3
+fuel_type[fuel_type == "Wood"] = 4
+fuel_type[fuel_type == "None"] = NA
+fuel_type[fuel_type == "Solar"] = 5
+fuel_type[fuel_type == "Unknown/Other"] = NA
+fuel_type = na.omit(fuel_type)
+fuel_type <- as.numeric(fuel_type)
+# (unique(fuel_type))
+```
+
+```{r}
+# 9.Heat.Type (Change categorical data to numerical)
+
+# (unique(data$heat_type))
+heat_type = data$heat_type
+heat_type[heat_type == "Electric"] = 1
+heat_type[heat_type == "Hot Water"] = 2
+heat_type[heat_type == "None"] = NA
+heat_type = suppressWarnings(as.numeric(c("1", "2", "X")))
+heat_type = na.omit(heat_type)
+heat_type
+# (unique(heat_type))
+```
+
+```{r}
+# 10.Sewer.Type (Change categorical data to numerical)
+
+# (unique(data$sewer_type))
+sewer_type = data$sewer_type
+sewer_type[sewer_type == "Private"] = 1
+sewer_type[sewer_type == "Public"] = 2
+sewer_type[sewer_type == "None/Unknown"] = NA
+sewer_type = na.omit(sewer_type)
+sewer_type <- as.numeric(sewer_type)
+# (unique(sewer_type))
+```
+
+```{r}
+# 11.Living Area (drop rows with NA)
+living_area = data$living_area
+living_area[living_area == ""] = NA
+living_area = na.omit(living_area)
+```
+
+```{r}
+# 12.Pct_college (drop rows with NA)
+pct_college = data$pct_college
+pct_college[pct_college == ""] = NA
+pct_college = na.omit(pct_college)
+```
+
+```{r}
+# 13.Bedrooms (drop rows with NA)
+bedrooms = data$bedrooms
+bedrooms[bedrooms == ""] = NA
+bedrooms = na.omit(bedrooms)
+```
+
+```{r}
+# 14.Fireplaces (drop rows with NA)
+fireplaces = data$fireplaces
+fireplaces[fireplaces == ""] = NA
+fireplaces = na.omit(fireplaces)
+```
+
+```{r}
+# 15.Bathrooms (drop rows with NA)
+bathrooms = data$bathrooms
+bathrooms[bathrooms == ""] = NA
+bathrooms = na.omit(bathrooms)
+```
+
+```{r}
+# 16.Rooms (drop rows with NA)
+rooms = data$rooms
+rooms[rooms == ""] = NA
+rooms = na.omit(rooms)
+```
+
+```{r}
+# 17.Test (drop rows with NA)
+test = data$test
+test[fireplaces == ""] = NA
+test = na.omit(test)
+```
+
+##### Limitations: 
+
+##### Bias: 
+The housing prices may also be affected by different suburbs they are located in but it is not indicated.
+
+
+
+
+# IDA
+```{r load_libraries,message = FALSE,results = "hide", warning=FALSE}
+
+```
+
+# Assumption
+
+# Analysis
+#Back/Forward selection 
+aaaaaa
+
+## Multi-Regression Model
+```{r}
+lm1 = lm(log(price)~ lot_size+ waterfront+ age+ land_value+new_construct+central_air+fuel_type+heat_type+sewer_type+living_area+pct_college+bedrooms+fireplaces+bathrooms+rooms+test, data =data)
+
+summary(lm1)
+
+#step.back.aic = step(lm3, 
+          #           direction = "backward", 
+           #          trace = FALSE)
+#round(summary(step.back.aic)$coef,3)
+
+
+```
+```{r}
+
+step.back.aic = step(lm1, 
+                     direction = "backward", 
+                     trace = FALSE)
+round(summary(step.back.aic)$coef,3)
+
+step.back.aic %>%
+  broom::glance() %>% 
+  round(2) %>% t()
+
+
+drop1(step.back.aic, test = "F")
+
+
+```
+
+
+```{r}
+#Graph involve in the analysis 
+fit = lm1
+ plot(fit)
+
+```
+
+
+
+```{r}
+lm2 = lm(price ~ lot_size, data = data)
+
+new_temp = data.frame(lot_size = seq(from = min(lot_size),
+                                        to = max(lot_size),
+                                        by = 0.1))
+
+pi = predict(lm2, new_temp, interval = "prediction", level = 0.90)
+ci = predict(lm2, new_temp, interval = "confidence", level = 0.90)
+interval_df = data.frame(
+  pi_upper = pi[,"upr"],
+  pi_lower = pi[,"lwr"],
+  ci_upper = ci[,"upr"],
+  ci_lower = ci[,"lwr"],
+  temperature = new_temp$temperature
+)
+
+```
+
+# Limitations
+# Results  
+# Conclusion
+# References
+
